@@ -116,6 +116,7 @@ function! s:check_exclusions() abort
     if empty(filter(copy(lines), 'v:val == s:datadir'))
       call add(lines, s:datadir)
       call writefile(lines, exclude_file)
+    endif
     return 1
   endif
 
