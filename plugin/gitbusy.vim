@@ -1,7 +1,7 @@
 let s:cmd = 'command! -nargs=* -complete=custom,gitbusy#branchlist %s call gitbusy#switch(<q-args>)'
 
 execute printf(s:cmd, 'GitBusy')
-if get(g:, 'gitbusy_short_command', 1)
+if get(g:, 'gitbusy_short_command', 0)
   execute printf(s:cmd, 'GB')
 endif
 
