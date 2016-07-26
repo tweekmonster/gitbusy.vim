@@ -27,34 +27,27 @@ function! s:strip(s) abort
 endfunction
 
 
+" Set relevant paths.
+function! s:set_gitpaths() abort
+  let output = system('git rev-parse --show-toplevel --git-dir')
+  let lines = split(output, "\n")
+  if v:shell_error || len(lines) < 2
+    throw 'Could not set git paths.'
+  endif
+
+  let s:_repo = lines[0]
+  let s:_gitroot = lines[1]
+endfunction
+
+
 " Get a file at the .git directory.
 " We only care about the git dir and work tree for the files this script
 " create.
 function! s:gitroot(...) abort
   if !exists('s:_gitroot')
-    if exists('$GIT_DIR')
-      let s:_gitroot = s:strip_slash(simplify($GIT_DIR))
-    else
-      let last_dir = ''
-      let gitdir = expand('/.git')
-      let dir = fnamemodify(getcwd(), ':p')
-      while last_dir != dir
-        if filewritable(dir.gitdir) == 2
-          let s:_gitroot = dir.gitdir
-          break
-        endif
-
-        let last_dir = dir
-        let dir = fnamemodify(dir, ':h')
-      endwhile
-    endif
+    call s:set_gitpaths()
   endif
-
-  if exists('s:_gitroot')
-    return simplify(s:_gitroot.(a:0 ? expand('/'.a:1) : ''))
-  else
-    return simplify(getcwd().expand('/.git').(a:0 ? expand('/'.a:1) : ''))
-  endif
+  return simplify(s:_gitroot.(a:0 ? expand('/'.a:1) : ''))
 endfunction
 
 
@@ -67,13 +60,8 @@ endfunction
 " Get a file at the root of the repo work tree.
 function! s:repo(...) abort
   if !exists('s:_repo')
-    if exists('$GIT_WORK_TREE')
-      let s:_repo = $GIT_WORK_TREE
-    else
-      let s:_repo = fnamemodify(s:gitroot(), ':h')
-    endif
+    call s:set_gitpaths()
   endif
-
   return s:_repo.(a:0 ? expand('/'.a:1) : expand('/'))
 endfunction
 
@@ -498,4 +486,6 @@ function! gitbusy#switch(...) abort
   endif
 
   call gitbusy#setup()
+  unlet! s:_repo
+  unlet! s:_gitroot
 endfunction
