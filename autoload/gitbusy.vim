@@ -130,7 +130,7 @@ function! s:stash_key(...) abort
   let ref = a:0 ? a:1 : 'HEAD'
   let hash = s:strip(s:gite('rev-parse', '--short', ref))
   if v:shell_error || empty(hash)
-    throw 'Could not create a stash key for:' ref
+    throw 'Could not create a stash key for: '.ref
   endif
 
   return s:key_prefix.hash
