@@ -114,7 +114,7 @@ function! s:check_exclusions() abort
   if filewritable(exclude_file)
     let lines = readfile(exclude_file)
     if empty(filter(copy(lines), 'v:val == s:datadir'))
-      call append(lines, s:datadir)
+      call add(lines, s:datadir)
       call writefile(lines, exclude_file)
     return 1
   endif
