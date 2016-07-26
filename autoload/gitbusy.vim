@@ -380,7 +380,7 @@ endfunction
 
 " List of branches (used for command completion).
 function! gitbusy#branchlist(...) abort
-  let output = s:git('branch', '-l')
+  let output = s:git('branch', '-a')
   if v:shell_error
     return ''
   endif
@@ -443,9 +443,38 @@ function! gitbusy#setup() abort
 endfunction
 
 
+function! gitbusy#choose() abort
+  let branches = split(gitbusy#branchlist(), "\n")
+  let l = strlen(len(branches))
+
+  redraw
+
+  for i in range(len(branches))
+    echo printf('%*d. %s', l, i + 1, branches[i])
+  endfor
+
+  let selection = input('Select a branch: ')
+  echo ''
+
+  if empty(selection)
+    return
+  endif
+
+  let i = str2nr(selection) - 1
+  if i >= 0 && i < len(branches) && !empty(branches[i])
+    call gitbusy#switch(branches[i])
+  endif
+endfunction
+
+
 " Switch to a branch.
-function! gitbusy#switch(branch) abort
-  let msg = s:check_can_switch(a:branch)
+function! gitbusy#switch(...) abort
+  if !a:0 || empty(a:1)
+    return gitbusy#choose()
+  endif
+
+  let branch = a:1
+  let msg = s:check_can_switch(branch)
   if !empty(msg)
     echohl ErrorMsg
     echomsg 'Did''t switch branches:' msg
@@ -460,7 +489,7 @@ function! gitbusy#switch(branch) abort
   call s:stash(key)
 
   unlet! s:_did_setup
-  call s:git('checkout', a:branch)
+  call s:git('checkout', branch)
   let key = s:stash_key()
   if s:unstash(key)
     call s:restore_staged_hunks()
