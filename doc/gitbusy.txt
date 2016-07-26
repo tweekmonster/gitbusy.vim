@@ -1,0 +1,105 @@
+*gitbusy* Switch between branches without losing your place
+
+                  _______ __ __   ______                                     ~
+                 |     __|__|  |_|   __ \.--.--.-----.--.--.                 ~
+                 |    |  |  |   _|   __ <|  |  |__ --|  |  |                 ~
+                 |_______|__|____|______/|_____|_____|___  |                 ~
+                                                     |_____|                 ~
+
+==============================================================================
+INTRO                                                           *gitbusy-intro*
+
+Stash your Vim session using git-stash before switching to another branch.
+
+A snapshot of your session (including staged hunks, undo history, and
+`viminfo`/`shada`) is completely stashed in the git repository.  It allows you
+to switch between branches mid-work without losing where you left off.
+
+
+==============================================================================
+COMMAND                                                       *gitbusy-command*
+
+								    *:GitBusy*
+									 *:GB*
+:GitBusy			Switches to a branch if used with an argument.
+				Otherwise, prints a list of branches to select
+				from.
+
+
+==============================================================================
+CONFIG                                                         *gitbusy-config*
+
+							   *g:gitbusy_git_exe*
+g:gitbusy_git_exe		The path to the `git` executable.
+
+				Default: `git`
+
+							   *g:gitbusy_datadir*
+g:gitbusy_datadir		The name of the data directory.  This should
+				not contain any slashes since it lives in the
+				work tree's root.
+
+				Default: `.gitbusy`
+
+							*g:gitbusy_save_shada*
+g:gitbusy_save_shada		If enabled, stores the |shada| (Neovim) or
+				|viminfo| (Vim) data file.
+
+				Default: `1`
+
+						     *g:gitbusy_short_command*
+g:gitbusy_short_command		If enabled, makes the |:GB| command available
+				for a streamlined, yet luxurious, experience.
+
+				Default: `0`
+
+
+==============================================================================
+CAVEATS                                                       *gitbusy-caveats*
+
+I consider these to be acceptable caveats.  But, |gitbusy| might not be right
+for you if you don't like them.
+
+- Manually using git-checkout may leave dangling stashes.  You'll be
+  prompted to delete them before |:GitBusy| will switch branches.
+- All buffers must be saved (|nomodified|) in order to switch branches.
+- Terminals can't be opened in Neovim in order to switch branches.
+- Stashes may become large over time depending on your |viminfo|/|shada|
+  options, undo levels, etc.
+- You may lose work if you manually/accidentally remove |gitbusy|'s stashes.
+  See git-stash's man page about a possible recovery.
+- |gitbusy|'s data directory is created at the work tree's root.
+- An entry for |gitbusy|'s data directory is ignored by adding an entry to
+  `.git/info/exclude`.
+- Sessions are saved with the following settings: `buffers`, `curdir`, `folds`,
+  `help`, `slash`, `tabpages`, `unix`.  See: |'sessionoptions'|
+- Things may get mixed up if the current directory is different from what
+  |gitbusy| thinks it should be.
+
+
+==============================================================================
+LICENSE                                                       *gitbusy-license*
+
+The MIT License
+Copyright (c) 2016 Tommy Allen
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+vim:tw=78:ts=8:noet:ft=help:norl:
