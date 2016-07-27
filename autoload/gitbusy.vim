@@ -424,7 +424,7 @@ endfunction
 " Bootstrap your session.
 function! gitbusy#setup() abort
   if exists('s:_did_setup') || exists('SessionLoad') || !s:is_git_repo()
-    return
+    return get(s:, '_did_setup', 0)
   endif
 
   call s:check_exclusions()
@@ -458,6 +458,7 @@ function! gitbusy#setup() abort
   let &undodir = undopath.','.s:orig_undodir
 
   let s:_did_setup = 1
+  return 1
 endfunction
 
 
@@ -487,6 +488,13 @@ endfunction
 
 " Switch to a branch.
 function! gitbusy#switch(...) abort
+  if !gitbusy#setup()
+    echohl WarningMsg
+    echo 'GitBusy couldn''t start.  Are you in a Git repo?'
+    echohl None
+    return
+  endif
+
   if !a:0 || empty(a:1)
     return gitbusy#choose()
   endif
