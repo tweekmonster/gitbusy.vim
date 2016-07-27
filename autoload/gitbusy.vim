@@ -154,18 +154,26 @@ function! s:stash_key(...) abort
   let hash = logdesc[0]
   let refname = ''
   for item in logdesc[1:]
+    let is_tag = 0
     if item =~# '^HEAD ->'
       let refname = matchstr(item, 'HEAD -> \zs.*')
     elseif item =~# '^tag:'
-      let refname = '#'.matchstr(item, 'tag: \zs.*')
+      let is_tag = 1
+      let refname = matchstr(item, 'tag: \zs.*')
     elseif item != 'HEAD'
       let refname = item
     endif
 
     if !empty(refname)
-      break
+      if ref != 'HEAD' && ref =~# '/'.refname.'$'
+        break
+      endif
     endif
   endfor
+
+  if is_tag
+    let refname = '#'.refname
+  endif
 
   return s:key_prefix.refname.','.hash
 endfunction
