@@ -146,16 +146,28 @@ endfunction
 " if a branch isn't supplied.
 function! s:stash_key(...) abort
   let ref = a:0 ? a:1 : 'HEAD'
-  let refname = s:strip(s:git('rev-parse', '--symbolic-full-name', ref))
-  if empty(refname)
-    let hash = s:strip(s:gite('rev-parse', '--short', ref))
-    if v:shell_error || empty(hash)
-      throw 'Could not create a stash key for: '.ref
-    endif
-    return s:key_prefix.hash
+  let logdesc = split(s:strip(s:git('log', '--ignore-missing', '--pretty=format:%h,%D', '-1')), ',\s*')
+  if v:shell_error || empty(logdesc)
+    throw 'Could not create a stash key for: '.ref
   endif
 
-  return s:key_prefix.refname
+  let hash = logdesc[0]
+  let refname = ''
+  for item in logdesc[1:]
+    if item =~# '^HEAD ->'
+      let refname = matchstr(item, 'HEAD -> \zs.*')
+    elseif item =~# '^tag:'
+      let refname = '#'.matchstr(item, 'tag: \zs.*')
+    elseif item != 'HEAD'
+      let refname = item
+    endif
+
+    if !empty(refname)
+      break
+    endif
+  endfor
+
+  return s:key_prefix.refname.','.hash
 endfunction
 
 
