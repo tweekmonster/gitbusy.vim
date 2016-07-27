@@ -1,4 +1,5 @@
 let s:stderr = ''
+let s:suppress_stderr = 0
 let s:datadir = get(g:, 'gitbusy_datadir', '.gitbusy')
 
 " This should be a sufficiently unique string in the stash message.
@@ -115,7 +116,7 @@ endfunction
 " Like s:git(), but prints errors
 function! s:gite(...) abort
   let output = call('s:git', a:000)
-  if v:shell_error
+  if v:shell_error && !s:suppress_stderr
     echohl ErrorMsg
     echomsg s:stderr
     echohl None
@@ -372,27 +373,38 @@ function! s:check_can_switch(to_branch) abort
   endif
 
   " Check if there's more than one target stash.
-  let stash_key = s:stash_key(a:to_branch)
-  let stashes = s:find_stash(stash_key)
+  let s:suppress_stderr = 1
 
-  if len(stashes) > 1
-    redraw
-    echo 'There are more than one target stash matching: '.stash_key.'. '
-          \.'There must only be one to continue.'
-    for info in stashes
-      echo printf(' - %s %s: On branch %s', info[0], info[1], info[2])
-    endfor
+  try
+    let stash_key = s:stash_key(a:to_branch)
+  catch
+    let stash_key = ''
+  endtry
 
-    let response = input('Use the first one and delete the rest? [y/N] ')
-    echo ''
-    if response =~# 'y'
-      let hashes = map(copy(stashes[1:]), 'v:val[0]')
-      if !s:drop_stashes(hashes)
-        return 'Could not drop stashes.'
+  let s:suppress_stderr = 0
+
+  if !empty(stash_key)
+    let stashes = s:find_stash(stash_key)
+
+    if len(stashes) > 1
+      redraw
+      echo 'There are more than one target stash matching: '.stash_key.'. '
+            \.'There must only be one to continue.'
+      for info in stashes
+        echo printf(' - %s %s: On branch %s', info[0], info[1], info[2])
+      endfor
+
+      let response = input('Use the first one and delete the rest? [y/N] ')
+      echo ''
+      if response =~# 'y'
+        let hashes = map(copy(stashes[1:]), 'v:val[0]')
+        if !s:drop_stashes(hashes)
+          return 'Could not drop stashes.'
+        endif
+        return 'Extrenuous target stashes deleted.  Try to switch branches again.'
+      else
+        return 'Too many target stashes.'
       endif
-      return 'Extrenuous target stashes deleted.  Try to switch branches again.'
-    else
-      return 'Too many target stashes.'
     endif
   endif
 
@@ -512,6 +524,23 @@ function! gitbusy#switch(...) abort
     return
   endif
 
+  let new_branch = 0
+  if empty(filter(split(gitbusy#branchlist(), "\n"), 'v:val == branch'))
+    " Prompt user to create a new branch
+    redraw
+    echo 'Branch does not exist:' branch
+    let response = input('Create branch? [y/N] ')
+    echo ''
+
+    if response !=# 'y'
+      redraw
+      echo 'Cancelled.'
+      return
+    endif
+
+    let new_branch = 1
+  endif
+
   let key = s:stash_key()
   call s:save_session()
   silent bufdo bd
@@ -519,7 +548,12 @@ function! gitbusy#switch(...) abort
   call s:stash(key)
 
   unlet! s:_did_setup
-  call s:git('checkout', branch)
+  if new_branch
+    call s:git('checkout', '-b', branch)
+  else
+    call s:git('checkout', branch)
+  endif
+
   let key = s:stash_key()
   if s:unstash(key)
     call s:restore_staged_hunks()
