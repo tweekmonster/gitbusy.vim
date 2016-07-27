@@ -145,18 +145,22 @@ endfunction
 " if a branch isn't supplied.
 function! s:stash_key(...) abort
   let ref = a:0 ? a:1 : 'HEAD'
-  let hash = s:strip(s:gite('rev-parse', '--short', ref))
-  if v:shell_error || empty(hash)
-    throw 'Could not create a stash key for: '.ref
+  let refname = s:strip(s:git('rev-parse', '--symbolic-full-name', ref))
+  if empty(refname)
+    let hash = s:strip(s:gite('rev-parse', '--short', ref))
+    if v:shell_error || empty(hash)
+      throw 'Could not create a stash key for: '.ref
+    endif
+    return s:key_prefix.hash
   endif
 
-  return s:key_prefix.hash
+  return s:key_prefix.refname
 endfunction
 
 
 " Find all gitbusy stashes.
 function! s:all_stashes() abort
-  let stash_pat = escape(s:key_prefix, '^$.[]').'\x\+$'
+  let stash_pat = escape(s:key_prefix, '^$.[]').'.\+$'
   let matches = []
 
   for line in split(s:git('stash', 'list', '--oneline', '--no-color'), "\n")
