@@ -1,14 +1,17 @@
 let s:stderr = ''
 let s:datadir = get(g:, 'gitbusy_datadir', '.gitbusy')
-let s:shadafile = expand(s:datadir.'/shada')
-let s:hunkfile = expand(s:datadir.'/staged_index')
-let s:sessionfile = expand(s:datadir.'/session.vim')
-let s:undodir = expand(s:datadir.'/undo')
 
 " This should be a sufficiently unique string in the stash message.
 let s:key_prefix = '@@gitbusy@@'
 
-let s:sep = expand('/')
+if has('win32')
+  let s:sep = '\'
+  let s:sep_p = '\\'
+else
+  let s:sep = '/'
+  let s:sep_p = '/'
+endif
+
 let s:orig_undodir = &undodir
 
 unlet! s:_gitroot
@@ -17,8 +20,26 @@ unlet! s:_repo
 
 " Strip trailing slash from string.
 function! s:strip_slash(s) abort
-  return substitute(a:s, escape(expand('/'), '\').'\+$', '', 'g')
+  return substitute(a:s, s:sep_p.'\+$', '', 'g')
 endfunction
+
+
+" Normalize a path string.
+function! s:path(path) abort
+  return simplify(substitute(a:path, '/', s:sep, 'g'))
+endfunction
+
+
+" Append path components to a base path.  Always remove the trailing slash.
+function! s:path_append(base, ...) abort
+  return s:strip_slash(s:path(s:strip_slash(a:base).'/'.join(a:000, '/')))
+endfunction
+
+
+let s:shadafile = s:path_append(s:datadir, 'shada')
+let s:hunkfile = s:path_append(s:datadir, 'staged_index')
+let s:sessionfile = s:path_append(s:datadir, 'session.vim')
+let s:undodir = s:path_append(s:datadir, 'undo')
 
 
 " Strip whitespace surrounding string.
@@ -47,7 +68,7 @@ function! s:gitroot(...) abort
   if !exists('s:_gitroot')
     call s:set_gitpaths()
   endif
-  return simplify(s:_gitroot.(a:0 ? expand('/'.a:1) : ''))
+  return call('s:path_append', [s:_gitroot] + a:000)
 endfunction
 
 
@@ -62,7 +83,7 @@ function! s:repo(...) abort
   if !exists('s:_repo')
     call s:set_gitpaths()
   endif
-  return s:_repo.(a:0 ? expand('/'.a:1) : expand('/'))
+  return call('s:path_append', [s:_repo] + a:000)
 endfunction
 
 
@@ -410,8 +431,8 @@ function! gitbusy#setup() abort
     call mkdir(undo_dir, 'p', 0700)
   endif
 
-  let undopath = expand(s:repo(s:undodir))
-  let undobase = split(undofile(expand(s:repo())), escape(expand('/'), '\'))[-1]
+  let undopath = s:repo(s:undodir)
+  let undobase = split(undofile(s:repo()), s:sep_p)[-1]
 
   let undo_base_file = s:repo(s:undodir.'/base')
   if filereadable(undo_base_file)
