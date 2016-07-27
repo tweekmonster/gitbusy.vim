@@ -53,7 +53,9 @@ function! s:set_gitpaths() abort
   let output = system('git rev-parse --show-toplevel --git-dir')
   let lines = split(output, "\n")
   if v:shell_error || len(lines) < 2
-    throw 'Could not set git paths.'
+    let s:_repo = ''
+    let s_gitroot = ''
+    return
   endif
 
   let s:_repo = lines[0]
