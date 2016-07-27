@@ -98,7 +98,13 @@ function! s:git(...) abort
   let git = get(g:, 'gitbusy_git_exe', 'git')
   let stderr_file = tempname()
   let output = system(git.' '.args.' 2>'.stderr_file)
-  let s:stderr = join(readfile(stderr_file), "\n")
+
+  if filereadable(stderr_file)
+    let s:stderr = join(readfile(stderr_file), "\n")
+  else
+    let s:stderr = ''
+  endif
+
   if v:shell_error
     return ''
   endif
