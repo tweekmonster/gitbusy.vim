@@ -403,7 +403,7 @@ function! gitbusy#branchlist(...) abort
     return ''
   endif
 
-  let branches = map(filter(split(output, "\n"), 'v:val[0] != "*"'), 's:strip(v:val)')
+  let branches = map(filter(split(output, "\n"), 'v:val !~# "[*>]"'), 's:strip(v:val)')
   return join(branches, "\n")
 endfunction
 
