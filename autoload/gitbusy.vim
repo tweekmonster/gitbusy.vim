@@ -146,7 +146,7 @@ endfunction
 " if a branch isn't supplied.
 function! s:stash_key(...) abort
   let ref = a:0 ? a:1 : 'HEAD'
-  let logdesc = split(s:strip(s:git('log', '--ignore-missing', '--pretty=format:%h,%D', '-1')), ',\s*')
+  let logdesc = split(s:strip(s:git('log', '--ignore-missing', '--pretty=format:%h,%D', '-1', ref)), ',\s*')
   if v:shell_error || empty(logdesc)
     throw 'Could not create a stash key for: '.ref
   endif
