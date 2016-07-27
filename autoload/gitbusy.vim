@@ -54,7 +54,7 @@ function! s:set_gitpaths() abort
   let lines = split(output, "\n")
   if v:shell_error || len(lines) < 2
     let s:_repo = ''
-    let s_gitroot = ''
+    let s:_gitroot = ''
     return
   endif
 
