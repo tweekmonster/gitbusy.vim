@@ -8,5 +8,5 @@ endif
 unlet! s:cmd
 
 augroup gitbusy
-  autocmd! SessionLoadPost,VimEnter * call gitbusy#setup()
+  autocmd! BufEnter * call gitbusy#setup()
 augroup END
