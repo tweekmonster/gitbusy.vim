@@ -626,7 +626,26 @@ function! gitbusy#switch(...) abort
 
   let key = s:stash_key()
   call s:save_session()
-  silent bufdo bd
+
+  " Minimize the screen redrawing
+  let showtabline = &showtabline
+  let laststatus = &laststatus
+  set showtabline=0 laststatus=0
+
+  " Create a new empty tab.  This will create a new buffer which should have
+  " the highest buffer number.
+  tabnew
+  redraw
+
+  " To minimize the number of screen updates, use a loop and bdelete.
+  " `bufdo bdelete` causes the buffer to be displayed in the current window
+  " which can cause a screen update.
+  for i in range(1, bufnr('$'))
+    if bufexists(i) && buflisted(i)
+      execute 'bdelete' i
+    endif
+  endfor
+
   call s:save_staged_hunks()
   call s:stash(key)
 
@@ -658,4 +677,7 @@ function! gitbusy#switch(...) abort
   call gitbusy#setup()
   unlet! s:_repo
   unlet! s:_gitroot
+
+  let &showtabline = showtabline
+  let &laststatus = laststatus
 endfunction
