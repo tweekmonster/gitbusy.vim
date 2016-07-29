@@ -142,6 +142,12 @@ function! s:check_exclusions() abort
 endfunction
 
 
+" Get a hash if it exists.
+function! s:ref_hash(ref) abort
+  return s:strip(s:git('rev-parse', '--quiet', '--short', '--verify', a:ref))
+endfunction
+
+
 " Get a reproducible and unique name for a stash based on a branch.  Uses HEAD
 " if a branch isn't supplied.
 function! s:stash_key(...) abort
@@ -210,6 +216,27 @@ function! s:find_stash(key) abort
   endfor
 
   return matches
+endfunction
+
+
+function! s:find_stash_by_hash(branch, hash) abort
+  let pattern = s:key_prefix.'[^,]\+,'.a:hash.'$'
+
+  for info in s:all_stashes()
+    if info[-1] =~# pattern
+      if info[2] == a:branch
+        return info
+      elseif info[-1] =~# '#'
+        " See if 'branch' is a tag.
+        let tag = matchstr(info[-1], '#\zs[^,]\+')
+        if tag == a:branch
+          return info
+        endif
+      endif
+    endif
+  endfor
+
+  return []
 endfunction
 
 
@@ -607,7 +634,19 @@ function! gitbusy#switch(...) abort
     call s:git('checkout', branch)
   endif
 
-  let key = s:stash_key()
+  let hash = s:ref_hash('HEAD')
+  let key = ''
+  if !empty(hash)
+    let info = s:find_stash_by_hash(branch, hash)
+    if !empty(info)
+      let key = info[-1]
+    endif
+  endif
+
+  if empty(key)
+    let key = s:stash_key()
+  endif
+
   if s:unstash(key)
     call s:restore_staged_hunks()
     call s:load_session()
