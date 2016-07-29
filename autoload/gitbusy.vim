@@ -434,12 +434,45 @@ endfunction
 
 " List of branches (used for command completion).
 function! gitbusy#branchlist(...) abort
-  let output = s:git('branch', '-a')
+  let stashes = s:all_stashes()
+  let branchlist = split(s:git('branch', '-a'), "\n")
   if v:shell_error
     return ''
   endif
 
-  let branches = map(filter(split(output, "\n"), 'v:val !~# "[*>]"'), 's:strip(v:val)')
+  let branches = []
+
+  for stash in stashes
+    if stash[2] != '(no branch)' && index(branches, stash[2]) == -1
+      call add(branches, stash[2])
+    else
+      let tag = matchstr(stash[-1], '#\zs[^,]\+')
+      if !empty(tag) && index(branches, tag) == -1
+        call add(branches, tag)
+      endif
+    endif
+  endfor
+
+  for line in branchlist
+    if line =~# '\*'
+      let line = matchstr(line, '\*\s*\zs\S\+')
+    else
+      let line = matchstr(line, '\S\+')
+    endif
+
+    if line =~# '^remotes/'
+      let line = line[8:]
+    endif
+
+    if line =~# 'HEAD$'
+      continue
+    endif
+
+    if !empty(line) && index(branches, line) == -1
+      call add(branches, line)
+    endif
+  endfor
+
   return join(branches, "\n")
 endfunction
 
