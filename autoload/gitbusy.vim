@@ -161,7 +161,9 @@ function! s:stash_key(...) abort
   let refname = ''
   for item in logdesc[1:]
     let is_tag = 0
+    let is_head = 0
     if item =~# '^HEAD ->'
+      let is_head = 1
       let refname = matchstr(item, 'HEAD -> \zs.*')
     elseif item =~# '^tag:'
       let is_tag = 1
@@ -171,7 +173,7 @@ function! s:stash_key(...) abort
     endif
 
     if !empty(refname)
-      if ref != 'HEAD' && ref =~# '/'.refname.'$'
+      if (ref == 'HEAD' && is_head) || (ref != 'HEAD' && ref =~# '\<'.refname.'$')
         break
       endif
     endif
