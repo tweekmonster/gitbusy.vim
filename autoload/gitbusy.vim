@@ -464,7 +464,8 @@ endfunction
 " List of branches (used for command completion).
 function! gitbusy#branchlist(...) abort
   let stashes = s:all_stashes()
-  let branchlist = split(s:git('branch', '-a'), "\n")
+  let branchlist = split(s:git('tag', '-l'), "\n")
+        \ + split(s:git('branch', '-a'), "\n")
   if v:shell_error
     return ''
   endif
